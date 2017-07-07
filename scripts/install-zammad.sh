@@ -14,9 +14,6 @@ apt-get update
 # install dependencies
 apt-get --no-install-recommends -y install apt-transport-https libterm-readline-perl-perl locales mc net-tools nginx
 
-# install java from backports
-apt-get install -y -t jessie-backports openjdk-8-jre openjdk-8-jre-headless ca-certificates-java
-
 # install postfix
 echo "postfix postfix/main_mailer_type string Internet site" > preseed.txt
 debconf-set-selections preseed.txt
@@ -28,18 +25,8 @@ localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
 echo "LANG=en_US.UTF-8" > /etc/default/locale
 apt-get --no-install-recommends install -q -y postgresql
 
-# configure elasticsearch repo & key
-wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
-echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list
-
 # updating package list again
 apt-get update
-
-# install elasticsearch & attachment plugin
-update-ca-certificates -f
-apt-get --no-install-recommends -y install elasticsearch
-cd /usr/share/elasticsearch && bin/elasticsearch-plugin install mapper-attachments
-service elasticsearch start
 
 # create zammad user
 useradd -M -d "${ZAMMAD_DIR}" -s /bin/bash zammad
@@ -82,7 +69,7 @@ bundle exec rake assets:precompile
 rm -r tmp/cache
 
 # create es searchindex
-bundle exec rails r "Setting.set('es_url', 'http://localhost:9200')"
+bundle exec rails r "Setting.set('es_url', 'http://elasticsearch:9200')"
 bundle exec rake searchindex:rebuild
 
 # copy nginx zammad config
